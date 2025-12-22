@@ -32,6 +32,8 @@ public class Book{
     private String description;
     //创建时间
     private Date createTime;
+    //适用人群
+    private String appCrowd;
 
 
 

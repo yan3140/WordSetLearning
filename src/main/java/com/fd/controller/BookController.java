@@ -4,6 +4,7 @@ import com.fd.ResponseResult;
 import com.fd.service.BookService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -17,5 +18,10 @@ public class BookController {
     @GetMapping("/listAll")
     public ResponseResult listAll() {
         return bookService.listAll();
+    }
+
+    @GetMapping("/detail/{id}")
+    public ResponseResult detail(@PathVariable Long id) {
+        return bookService.detail(id);
     }
 }

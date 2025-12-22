@@ -11,4 +11,6 @@ package com.fd.service;
  */
  public interface BookService extends IService<Book> {
  ResponseResult listAll();
+
+ ResponseResult detail(Long bookId);
 }
