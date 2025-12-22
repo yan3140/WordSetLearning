@@ -17,6 +17,7 @@ import com.fd.utils.JwtUtil;
 import com.fd.utils.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -34,6 +35,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public ResponseResult getUserInfo() {
@@ -85,9 +89,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if(emailIsExist(registerDto.getEmail())){
             throw new SystemException(AppHttpCodeEnum.EMAIL_EXIST);
         }
-        String jwt = JwtUtil.createJWT(registerDto.getPassword());
+        String encode = passwordEncoder.encode(registerDto.getPassword());
         User user = BeanCopyUtils.copyBean(registerDto, User.class);
-        user.setPassword(jwt);
+        user.setPassword(encode);
         save(user);
         return ResponseResult.okResult();
     }
