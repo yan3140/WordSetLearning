@@ -2,7 +2,7 @@ server:
   port: 3899
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/yan_blog?characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:3306/web_set_learning?characterEncoding=utf8&serverTimezone=Asia/Shanghai
     username: root
     password: 806312
     driver-class-name: com.mysql.cj.jdbc.Driver
