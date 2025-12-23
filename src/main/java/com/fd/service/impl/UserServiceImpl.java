@@ -7,6 +7,7 @@ import com.fd.domain.dto.RegisterDto;
 import com.fd.domain.dto.UserInfoDto;
 import com.fd.domain.entity.LoginUser;
 import com.fd.domain.entity.User;
+import com.fd.domain.vo.LoginUserVo;
 import com.fd.domain.vo.UserInfoVo;
 import com.fd.enums.AppHttpCodeEnum;
 import com.fd.exception.SystemException;
@@ -14,9 +15,14 @@ import com.fd.mapper.UserMapper;
 import com.fd.service.UserService;
 import com.fd.utils.BeanCopyUtils;
 import com.fd.utils.JwtUtil;
+import com.fd.utils.RedisCache;
 import com.fd.utils.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -38,6 +44,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private RedisCache redisCache;
 
     @Override
     public ResponseResult getUserInfo() {
@@ -93,6 +102,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         User user = BeanCopyUtils.copyBean(registerDto, User.class);
         user.setPassword(encode);
         save(user);
+        return ResponseResult.okResult();
+    }
+
+    @Override
+    public ResponseResult login(Authentication authenticate) {
+        if(Objects.isNull(authenticate)){
+            throw new SystemException(AppHttpCodeEnum.LOGIN_ERROR);
+        }
+        LoginUser loginUser = (LoginUser) authenticate.getPrincipal();
+        String userId = loginUser.getUser().getUserId().toString();
+        String token = JwtUtil.createJWT(userId);
+        redisCache.setCacheObject("loginUser:"+userId,loginUser);
+        UserInfoVo userInfoVo = BeanCopyUtils.copyBean(loginUser.getUser(), UserInfoVo.class);
+        LoginUserVo loginUserVo = new LoginUserVo(userInfoVo, token);
+        return ResponseResult.okResult(loginUserVo);
+    }
+
+    @Override
+    public ResponseResult logout() {
+        LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String userId = loginUser.getUser().getUserId().toString();
+        redisCache.deleteObject("loginUser:"+userId);
         return ResponseResult.okResult();
     }
 

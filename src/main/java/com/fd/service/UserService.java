@@ -1,9 +1,11 @@
 package com.fd.service;
- import com.baomidou.mybatisplus.extension.service.IService;
- import com.fd.domain.ResponseResult;
- import com.fd.domain.dto.RegisterDto;
- import com.fd.domain.dto.UserInfoDto;
- import com.fd.domain.entity.User;
+
+import com.baomidou.mybatisplus.extension.service.IService;
+import com.fd.domain.ResponseResult;
+import com.fd.domain.dto.RegisterDto;
+import com.fd.domain.dto.UserInfoDto;
+import com.fd.domain.entity.User;
+import org.springframework.security.core.Authentication;
 
 /**
  * 用户表(User)表服务接口
@@ -11,11 +13,15 @@ package com.fd.service;
  * @author makejava
  * @since 2025-12-22 13:09:49
  */
- public interface UserService extends IService<User> {
- ResponseResult getUserInfo();
+public interface UserService extends IService<User> {
+    ResponseResult getUserInfo();
 
- ResponseResult updateUserInfo(UserInfoDto userInfoDto);
+    ResponseResult updateUserInfo(UserInfoDto userInfoDto);
 
 
- ResponseResult registerUser(RegisterDto registerDto);
+    ResponseResult registerUser(RegisterDto registerDto);
+
+    ResponseResult login(Authentication authentication);
+
+    ResponseResult logout();
 }

@@ -15,6 +15,15 @@ import java.util.List;
 public class LoginUser implements UserDetails {
 
     private User user;
+
+    private boolean enabled;
+    private boolean accountNonExpired ;
+    private boolean credentialsNonExpired ;
+    private boolean accountNonLocked ;
+
+    private String username;
+    private String password;
+    private Collection<? extends GrantedAuthority> authorities;
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of();
@@ -48,5 +57,9 @@ public class LoginUser implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    public LoginUser(User user) {
+        this.user = user;
     }
 }
