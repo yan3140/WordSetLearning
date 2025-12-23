@@ -2,7 +2,7 @@ package com.fd.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.fd.ResponseResult;
+import com.fd.domain.ResponseResult;
 import com.fd.domain.entity.Book;
 import com.fd.domain.vo.BookDetailVo;
 import com.fd.domain.vo.BookVo;

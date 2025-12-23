@@ -1,6 +1,6 @@
 package com.fd.service;
  import com.baomidou.mybatisplus.extension.service.IService;
- import com.fd.ResponseResult;
+ import com.fd.domain.ResponseResult;
  import com.fd.domain.entity.Book;
 
 /**
