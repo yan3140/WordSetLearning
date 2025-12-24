@@ -27,4 +27,14 @@ public class UserController {
     public ResponseResult registerUser(@RequestBody RegisterDto registerDto){
         return userService.registerUser(registerDto);
     }
+
+    @PostMapping("/addBook")
+    public ResponseResult addBook(@RequestParam Long bookId){
+        return userService.addBook(bookId);
+    }
+
+    @PutMapping("/deleteBook")
+    public ResponseResult deleteBook(@RequestParam Long bookId){
+        return userService.deleteBook(bookId);
+    }
 }

@@ -24,4 +24,8 @@ public interface UserService extends IService<User> {
     ResponseResult login(Authentication authentication);
 
     ResponseResult logout();
+
+    ResponseResult addBook(Long bookId);
+
+    ResponseResult deleteBook(Long bookId);
 }
