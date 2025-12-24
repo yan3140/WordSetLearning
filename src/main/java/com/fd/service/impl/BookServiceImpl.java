@@ -4,10 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fd.domain.ResponseResult;
 import com.fd.domain.entity.Book;
+import com.fd.domain.entity.Word;
 import com.fd.domain.vo.BookDetailVo;
 import com.fd.domain.vo.BookVo;
 import com.fd.mapper.BookMapper;
+import com.fd.mapper.WordMapper;
 import com.fd.service.BookService;
+import com.fd.service.WordService;
 import com.fd.utils.BeanCopyUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,6 +28,9 @@ public class BookServiceImpl extends ServiceImpl<BookMapper, Book> implements Bo
 
     @Autowired
     private BookMapper bookMapper;
+
+    @Autowired
+    private WordService wordService;
     @Override
     public ResponseResult listAll() {
         List<Book> books = list();
@@ -37,7 +43,11 @@ public class BookServiceImpl extends ServiceImpl<BookMapper, Book> implements Bo
         LambdaQueryWrapper<Book> queryWrapper = new LambdaQueryWrapper<Book>();
         queryWrapper.eq(Book::getBookId, bookId);
         Book book = bookMapper.selectOne(queryWrapper);
+        LambdaQueryWrapper<Word> queryWrapper1 = new LambdaQueryWrapper<Word>();
+        queryWrapper1.eq(Word::getBookId, bookId);
+        long count = wordService.count(queryWrapper1);
         BookDetailVo bookDetailVo = BeanCopyUtils.copyBean(book, BookDetailVo.class);
+        bookDetailVo.setWordCount(count);
         return ResponseResult.okResult(bookDetailVo);
     }
 }

@@ -20,4 +20,6 @@ public class BookDetailVo {
     private String description;
     //适用人群
     private String appCrowd;
+    //单词量
+    private Long wordCount;
 }
