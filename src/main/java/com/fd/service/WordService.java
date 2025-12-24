@@ -11,7 +11,7 @@ package com.fd.service;
  */
  public interface WordService extends IService<Word> {
 
- ResponseResult listAll(Integer pageNum, Integer pageSize, Long id);
+ ResponseResult listWords(Integer pageNum, Integer pageSize, Long id,Integer status);
 
  ResponseResult getWordDetails(Long id);
 }

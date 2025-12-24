@@ -4,24 +4,29 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fd.domain.ResponseResult;
-import com.fd.domain.entity.Phrase;
-import com.fd.domain.entity.Sentence;
-import com.fd.domain.entity.Translation;
-import com.fd.domain.entity.Word;
-import com.fd.domain.vo.PhraseVo;
-import com.fd.domain.vo.SentenceVo;
-import com.fd.domain.vo.TranslationVo;
-import com.fd.domain.vo.WordVo;
+import com.fd.domain.constants.SystemConstants;
+import com.fd.domain.entity.*;
+import com.fd.domain.vo.*;
+import com.fd.enums.AppHttpCodeEnum;
+import com.fd.exception.SystemException;
 import com.fd.mapper.PhraseMapper;
 import com.fd.mapper.SentenceMapper;
 import com.fd.mapper.TranslationMapper;
 import com.fd.mapper.WordMapper;
+import com.fd.service.UserWordStatusService;
 import com.fd.service.WordService;
 import com.fd.utils.BeanCopyUtils;
+import com.fd.utils.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 单词表(Word)表服务实现类
@@ -36,6 +41,9 @@ public class WordServiceImpl extends ServiceImpl<WordMapper, Word> implements Wo
     private WordMapper wordMapper;
 
     @Autowired
+    private UserWordStatusService userWordStatusService;
+
+    @Autowired
     private PhraseMapper phraseMapper;
 
     @Autowired
@@ -44,13 +52,58 @@ public class WordServiceImpl extends ServiceImpl<WordMapper, Word> implements Wo
     @Autowired
     private TranslationMapper translationMapper;
     @Override
-    public ResponseResult listAll(Integer pageNum, Integer pageSize, Long id) {
+    public ResponseResult listWords(Integer pageNum, Integer pageSize, Long id,Integer status) {
+        List<Integer> statusList = new ArrayList<>();
+        if(SystemConstants.WORD_STATUS_REMEMBERED.equals(status)){
+            statusList.add(SystemConstants.WORD_STATUS_REMEMBERED);
+        }else{
+            statusList.add(SystemConstants.WORD_STATUS_UNREMEMBERED);
+            statusList.add(SystemConstants.WORD_STATUS_VAGUE);
+        }
         LambdaQueryWrapper<Word> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Word::getBookId, id);
-        Page<Word> page = new Page<>(pageNum, pageSize);
-        page(page, queryWrapper);
-        List<Word> words = page.getRecords();
-        return null;
+        List<Long> wordIds = list(queryWrapper).stream()
+                .map(Word::getWordId)
+                .toList();
+        Long userId = SecurityUtils.getUserId();
+        if(Objects.isNull(userId)){
+            throw new SystemException(AppHttpCodeEnum.NEED_LOGIN);
+        }
+        LambdaQueryWrapper<UserWordStatus>  queryWrapper1 = new LambdaQueryWrapper<>();
+        queryWrapper1.eq(UserWordStatus::getUserId, userId)
+                .in(UserWordStatus::getWordId, wordIds)
+                .in(UserWordStatus::getStatus, statusList);
+        Page<UserWordStatus> page = new Page<>(pageNum, pageSize);
+        List<Long> wordIdList = userWordStatusService.page(page, queryWrapper1).getRecords().stream()
+                .map(UserWordStatus::getWordId)
+                .toList();
+        //为空情况
+        if (CollectionUtils.isEmpty(wordIdList)) {
+            WordListVo emptyVo = new WordListVo(List.of(), statusList.get(0), 0L);
+            return ResponseResult.okResult(emptyVo);
+        }
+        LambdaQueryWrapper<Word> wordWrapper = new LambdaQueryWrapper<>();
+        wordWrapper.in(Word::getWordId, wordIdList);
+        List<Word> wordList = list(wordWrapper);
+        List<WordLVo> wordLVos = BeanCopyUtils.copyBeanList(wordList, WordLVo.class);
+        LambdaQueryWrapper<Translation> translationWrapper = new LambdaQueryWrapper<>();
+        translationWrapper.in(Translation::getWordId, wordIdList);
+        Map<Long, TranslationVo> translationVoMap = translationMapper.selectList(translationWrapper).stream()
+                .collect(Collectors.groupingBy(
+                        Translation::getWordId, // 按wordId分组
+                        // 取分组后的第一个元素
+                        Collectors.collectingAndThen(
+                                // 先转换为TranslationVo列表
+                                Collectors.mapping(trans -> BeanCopyUtils.copyBean(trans, TranslationVo.class), Collectors.toList()),
+                                // 只保留列表第一个元素（无则为null）
+                                list -> list.isEmpty() ? null : list.get(0)
+                        )
+                ));
+        for (WordLVo wordLVo : wordLVos) {
+            TranslationVo translationVo = translationVoMap.get(wordLVo.getWordId());
+            wordLVo.setTranslation(translationVo);
+        }
+        return ResponseResult.okResult(new WordListVo(wordLVos,statusList.get(0),page.getTotal()));
     }
 
     @Override
