@@ -37,4 +37,10 @@ public class UserController {
     public ResponseResult deleteBook(@RequestParam Long bookId){
         return userService.deleteBook(bookId);
     }
+
+    @GetMapping("/books")
+    public ResponseResult getBooks(){
+        return userService.books();
+    }
+
 }

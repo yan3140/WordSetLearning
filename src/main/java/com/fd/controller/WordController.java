@@ -12,7 +12,7 @@ public class WordController {
     @Autowired
     private WordService wordService;
 
-    @GetMapping("/listRememberedWords")
+    @GetMapping("/listWords")
     public ResponseResult listRememberedWords(@RequestParam Integer pageNum, @RequestParam Integer pageSize, @RequestParam Long bookId,@RequestParam Integer status) {
         return wordService.listWords(pageNum, pageSize, bookId,status);
     }

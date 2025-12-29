@@ -10,6 +10,7 @@ import com.fd.domain.constants.SystemConstants;
 import com.fd.domain.dto.RegisterDto;
 import com.fd.domain.dto.UserInfoDto;
 import com.fd.domain.entity.*;
+import com.fd.domain.vo.BookVo;
 import com.fd.domain.vo.LoginUserVo;
 import com.fd.domain.vo.UserInfoVo;
 import com.fd.enums.AppHttpCodeEnum;
@@ -153,30 +154,38 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         Long userId = SecurityUtils.getUserId();
         queryWrapper.eq(UserBook::getUserId, userId);
         //判断是否重复添加
-        if(userBookService.count(queryWrapper) > 0){
-            throw new SystemException(AppHttpCodeEnum.BOOK_EXIST);
-        }
-        UserBook userBook = new UserBook(userId,bookId, SystemConstants.UNDELETED);
-        userBookService.save(userBook);
-        //将单词状态同步到word状态表
-        LambdaQueryWrapper<Word>  queryWrapper1 = new LambdaQueryWrapper<>();
-        queryWrapper1.eq(Word::getBookId, bookId);
-        int batchSize = 500;
-        IPage<Word> wordPage = new Page<>(1, batchSize);
-        do {
-            // 分页查询单词
-            wordPage = wordService.page(wordPage,queryWrapper1);
-            List<Word> wordList = wordPage.getRecords();
-            if (CollectionUtils.isEmpty(wordList)) {
-                break; // 无数据则退出循环
+        Integer isDeleted = userBookService.getById(bookId).getIsDeleted();
+        if(userBookService.count(queryWrapper) > 0||isDeleted.equals(SystemConstants.DELETED)){
+            if(isDeleted.equals(SystemConstants.DELETED)){
+                LambdaUpdateWrapper<UserBook> updateWrapper = new LambdaUpdateWrapper<>();
+                updateWrapper.set(UserBook::getIsDeleted, SystemConstants.UNDELETED);
+                userBookService.update(updateWrapper);
+            }else {
+                throw new SystemException(AppHttpCodeEnum.BOOK_EXIST);
             }
-            List<UserWordStatus> batchStatusList = wordList.stream()
-                    .map(Word::getWordId)
-                    .map(wordId -> new UserWordStatus(userId, wordId, SystemConstants.WORD_STATUS_UNREMEMBERED, 0))
-                    .toList();
-            userWordStatusService.saveBatch(batchStatusList);
-            wordPage.setCurrent(wordPage.getCurrent() + 1);
-        } while (wordPage.getCurrent() <= wordPage.getPages()); // 直到所有页查询完毕
+        }else {
+            UserBook userBook = new UserBook(userId, bookId, SystemConstants.UNDELETED);
+            userBookService.save(userBook);
+            //将单词状态同步到word状态表
+            LambdaQueryWrapper<Word> queryWrapper1 = new LambdaQueryWrapper<>();
+            queryWrapper1.eq(Word::getBookId, bookId);
+            int batchSize = 500;
+            IPage<Word> wordPage = new Page<>(1, batchSize);
+            do {
+                // 分页查询单词
+                wordPage = wordService.page(wordPage, queryWrapper1);
+                List<Word> wordList = wordPage.getRecords();
+                if (CollectionUtils.isEmpty(wordList)) {
+                    break; // 无数据则退出循环
+                }
+                List<UserWordStatus> batchStatusList = wordList.stream()
+                        .map(Word::getWordId)
+                        .map(wordId -> new UserWordStatus(userId, wordId, SystemConstants.WORD_STATUS_UNREMEMBERED, 0))
+                        .toList();
+                userWordStatusService.saveBatch(batchStatusList);
+                wordPage.setCurrent(wordPage.getCurrent() + 1);
+            } while (wordPage.getCurrent() <= wordPage.getPages()); // 直到所有页查询完毕
+        }
         return ResponseResult.okResult();
     }
 
@@ -187,7 +196,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         updateWrapper.eq(UserBook::getUserId, SecurityUtils.getUserId());
         updateWrapper.set(UserBook::getIsDeleted, SystemConstants.DELETED);
         userBookService.update(updateWrapper);
+        LambdaQueryWrapper<Word> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Word::getBookId, bookId);
+        List<Long> wordIds = wordService.list(queryWrapper).stream()
+                .map(Word::getWordId)
+                .toList();
+        LambdaUpdateWrapper<UserWordStatus> updateWrapper1 = new LambdaUpdateWrapper<>();
+        updateWrapper1.in(UserWordStatus::getWordId, wordIds);
+        updateWrapper1.set(UserWordStatus::getStatus, SystemConstants.WORD_STATUS_UNREMEMBERED);
+        updateWrapper1.set(UserWordStatus::getForgetCount,0);
+        userWordStatusService.update(updateWrapper1);
         return ResponseResult.okResult();
+    }
+
+    @Override
+    public ResponseResult books() {
+        Long userId = SecurityUtils.getUserId();
+        LambdaQueryWrapper<UserBook> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(UserBook::getUserId, userId);
+        queryWrapper.eq(UserBook::getIsDeleted, SystemConstants.UNDELETED);
+        List<UserBook> books = userBookService.list(queryWrapper);
+        BeanCopyUtils.copyBeanList(books, BookVo.class);
+        return ResponseResult.okResult(books);
     }
 
     private boolean nickNameIsExist(String nickName){

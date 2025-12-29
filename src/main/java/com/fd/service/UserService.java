@@ -28,4 +28,6 @@ public interface UserService extends IService<User> {
     ResponseResult addBook(Long bookId);
 
     ResponseResult deleteBook(Long bookId);
+
+    ResponseResult books();
 }
