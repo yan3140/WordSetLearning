@@ -6,4 +6,13 @@ public class SystemConstants {
     public static final Integer WORD_STATUS_VAGUE = 2;
     public static final Integer UNDELETED = 0;
     public static final Integer DELETED = 1;
+    /**
+     * 题型：看中文选英文（值=1）
+     */
+    public static final Integer CHINESE_QUESTION = 1;
+
+    /**
+     * 题型：看英文选中文（值=2）
+     */
+    public static final Integer ENGLISH_QUESTION = 2;
 }

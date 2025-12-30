@@ -52,20 +52,21 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // 关闭 CSRF（若为前后端分离场景，通常需要关闭）
+                // 关闭 CSRF
                 .csrf(AbstractHttpConfigurer::disable)
-                // 配置 Session 为无状态（不通过 Session 存储 SecurityContext）
+                // 配置 Session 为无状态
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 // 配置请求授权规则
                 .authorizeHttpRequests(auth -> auth
-                                // 登录接口允许匿名访问
-                                .requestMatchers("/login").anonymous()
-                                .requestMatchers("/logout").authenticated()
-                                .requestMatchers("/user/userInfo").authenticated()
-                                // 其余所有请求不需要认证
-                                .anyRequest().permitAll()
+                        // 登录接口允许匿名访问
+                        .requestMatchers("/login").anonymous()
+                        .requestMatchers("/book/**").anonymous()
+                        .requestMatchers("/word/{id}").anonymous()
+                        .requestMatchers("/word/listWords").authenticated()
+                        // 其余所有请求都需要认证
+                        .anyRequest().authenticated()
                 )
                 .logout(AbstractHttpConfigurer::disable)
                 //允许跨域
