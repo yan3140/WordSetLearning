@@ -63,7 +63,7 @@ public class SecurityConfig {
                         // 登录接口允许匿名访问
                         .requestMatchers("/login").anonymous()
                         .requestMatchers("/book/**").anonymous()
-                        .requestMatchers("/word/{id}").anonymous()
+                        .requestMatchers("/word/{id}").permitAll()
                         // 其余所有请求都需要认证
                         .anyRequest().authenticated()
                 )

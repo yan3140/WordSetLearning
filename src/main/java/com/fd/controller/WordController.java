@@ -6,18 +6,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/word")
+@RequestMapping
 public class WordController {
 
     @Autowired
     private WordService wordService;
 
-    @GetMapping("/listWords")
-    public ResponseResult listRememberedWords(@RequestParam Integer pageNum, @RequestParam Integer pageSize, @RequestParam Long bookId,@RequestParam Integer status) {
+    @GetMapping("/word/listWords")
+    public ResponseResult listWords(@RequestParam Integer pageNum,
+                                    @RequestParam Integer pageSize,
+                                    @RequestParam Long bookId,
+                                    @RequestParam Integer status) {
         return wordService.listWords(pageNum, pageSize, bookId,status);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/word/{id}")
     public ResponseResult getWordDetails(@PathVariable Long id) {
         return wordService.getWordDetails(id);
     }

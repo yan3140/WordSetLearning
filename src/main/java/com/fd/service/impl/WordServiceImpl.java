@@ -53,6 +53,10 @@ public class WordServiceImpl extends ServiceImpl<WordMapper, Word> implements Wo
     private TranslationMapper translationMapper;
     @Override
     public ResponseResult listWords(Integer pageNum, Integer pageSize, Long id,Integer status) {
+        Long userId = SecurityUtils.getUserId();
+        if(Objects.isNull(userId)){
+            throw new SystemException(AppHttpCodeEnum.NEED_LOGIN);
+        }
         List<Integer> statusList = new ArrayList<>();
         if(SystemConstants.WORD_STATUS_REMEMBERED.equals(status)){
             statusList.add(SystemConstants.WORD_STATUS_REMEMBERED);
@@ -65,10 +69,6 @@ public class WordServiceImpl extends ServiceImpl<WordMapper, Word> implements Wo
         List<Long> wordIds = list(queryWrapper).stream()
                 .map(Word::getWordId)
                 .toList();
-        Long userId = SecurityUtils.getUserId();
-        if(Objects.isNull(userId)){
-            throw new SystemException(AppHttpCodeEnum.NEED_LOGIN);
-        }
         LambdaQueryWrapper<UserWordStatus>  queryWrapper1 = new LambdaQueryWrapper<>();
         queryWrapper1.eq(UserWordStatus::getUserId, userId)
                 .in(UserWordStatus::getWordId, wordIds)
