@@ -2,6 +2,7 @@ package com.fd.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.fd.domain.ResponseResult;
+import com.fd.domain.dto.ExamDto;
 import com.fd.domain.entity.UserExam;
 
 /**
@@ -13,5 +14,7 @@ import com.fd.domain.entity.UserExam;
 public interface UserExamService extends IService<UserExam> {
     ResponseResult getExams(Integer status);
 
- ResponseResult createExam(Long bookId, Integer questionCount, Double questionRatio, Integer examTimeLimit);
+    ResponseResult createExam(Long bookId, Integer questionCount, Double questionRatio, Integer examTimeLimit);
+
+    ResponseResult updateExamStatus(ExamDto examDto);
 }

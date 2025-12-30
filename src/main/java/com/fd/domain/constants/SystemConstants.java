@@ -15,4 +15,9 @@ public class SystemConstants {
      * 题型：看英文选中文（值=2）
      */
     public static final Integer ENGLISH_QUESTION = 2;
+
+    public static final Integer EXAM_UNFINISHED = 1;
+    public static final Integer EXAM_FINISHED = 2;
+    public static final Integer CORRECT_ANSWER = 1;
+    public static final Integer WRONG_ANSWER = 0;
 }

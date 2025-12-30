@@ -64,7 +64,6 @@ public class SecurityConfig {
                         .requestMatchers("/login").anonymous()
                         .requestMatchers("/book/**").anonymous()
                         .requestMatchers("/word/{id}").anonymous()
-                        .requestMatchers("/word/listWords").authenticated()
                         // 其余所有请求都需要认证
                         .anyRequest().authenticated()
                 )

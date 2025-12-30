@@ -1,9 +1,11 @@
 package com.fd.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fd.domain.ResponseResult;
 import com.fd.domain.constants.SystemConstants;
+import com.fd.domain.dto.ExamDto;
 import com.fd.domain.entity.ExamQuestion;
 import com.fd.domain.entity.Translation;
 import com.fd.domain.entity.UserExam;
@@ -11,6 +13,8 @@ import com.fd.domain.entity.Word;
 import com.fd.domain.vo.QuestionVo;
 import com.fd.domain.vo.TranslationVo;
 import com.fd.domain.vo.WordLVo;
+import com.fd.enums.AppHttpCodeEnum;
+import com.fd.exception.SystemException;
 import com.fd.mapper.TranslationMapper;
 import com.fd.mapper.UserExamMapper;
 import com.fd.service.ExamQuestionService;
@@ -73,6 +77,37 @@ public class UserExamServiceImpl extends ServiceImpl<UserExamMapper, UserExam> i
             englishQuestions.get(i-1).setQuestionId((long) i);
         }
         examQuestionService.saveBatch(englishQuestions);
+        return ResponseResult.okResult();
+    }
+
+    @Override
+    public ResponseResult updateExamStatus(ExamDto examDto) {
+        UserExam userExam = examDto.getUserExam();
+        List<ExamQuestion> examQuestions = examDto.getExamQuestions();
+        if(userExam.getUsedTime()<userExam.getExamTimeLimit()&&userExam.getStatus().equals(SystemConstants.EXAM_UNFINISHED)){
+            boolean userExamUpdateSuccess = updateById(userExam);
+            if (!userExamUpdateSuccess) {
+                throw new SystemException(AppHttpCodeEnum.SYSTEM_ERROR);
+            }
+            examQuestionService.updateBatchById(examQuestions);
+        }else{
+            int correctCount = 0;
+            for(ExamQuestion examQuestion : examQuestions){
+                if(Objects.equals(examQuestion.getUserAnswer(), examQuestion.getCorrectAnswer())){
+                    examQuestion.setIsCorrect(SystemConstants.CORRECT_ANSWER);
+                    correctCount++;
+                }else {
+                    examQuestion.setIsCorrect(SystemConstants.WRONG_ANSWER);
+                }
+            }
+            boolean examQuestionUpDateSuccess = examQuestionService.updateBatchById(examQuestions);
+            if(!examQuestionUpDateSuccess){
+                throw new SystemException(AppHttpCodeEnum.SYSTEM_ERROR);
+            }
+            userExam.setStatus(SystemConstants.EXAM_FINISHED);
+            userExam.setScore(correctCount*100/examQuestions.size());
+            updateById(userExam);
+        }
         return ResponseResult.okResult();
     }
 

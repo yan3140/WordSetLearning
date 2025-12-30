@@ -1,5 +1,6 @@
 package com.fd.domain.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
@@ -19,8 +20,10 @@ import lombok.NoArgsConstructor;
 @TableName("exam_question")
 public class ExamQuestion{
     //题目ID
+    @TableId
     private Long questionId;
     //关联试卷ID
+    @TableField
     private Long examId;
     //关联单词ID
     private Long wordId;
