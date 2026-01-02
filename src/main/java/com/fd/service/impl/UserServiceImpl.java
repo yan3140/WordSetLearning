@@ -17,10 +17,7 @@ import com.fd.enums.AppHttpCodeEnum;
 import com.fd.exception.SystemException;
 import com.fd.mapper.UserBookMapper;
 import com.fd.mapper.UserMapper;
-import com.fd.service.UserBookService;
-import com.fd.service.UserService;
-import com.fd.service.UserWordStatusService;
-import com.fd.service.WordService;
+import com.fd.service.*;
 import com.fd.utils.BeanCopyUtils;
 import com.fd.utils.JwtUtil;
 import com.fd.utils.RedisCache;
@@ -64,6 +61,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Autowired
     private WordService wordService;
+
+    @Autowired
+    private BookService bookService;
 
     @Autowired
     private UserWordStatusService userWordStatusService;
@@ -215,9 +215,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         LambdaQueryWrapper<UserBook> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(UserBook::getUserId, userId);
         queryWrapper.eq(UserBook::getIsDeleted, SystemConstants.UNDELETED);
-        List<UserBook> books = userBookService.list(queryWrapper);
-        BeanCopyUtils.copyBeanList(books, BookVo.class);
-        return ResponseResult.okResult(books);
+        List<Long> bookIds = userBookService.list(queryWrapper).stream()
+                .map(UserBook::getBookId)
+                .toList();
+        LambdaQueryWrapper<Book> queryWrapper1 = new LambdaQueryWrapper<>();
+        queryWrapper1.in(Book::getBookId, bookIds);
+        List<BookVo> bookVos = BeanCopyUtils.copyBeanList(bookService.list(queryWrapper1), BookVo.class);
+        return ResponseResult.okResult(bookVos);
     }
 
     private boolean nickNameIsExist(String nickName){

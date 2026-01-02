@@ -84,12 +84,21 @@ public class UserExamServiceImpl extends ServiceImpl<UserExamMapper, UserExam> i
     public ResponseResult updateExamStatus(ExamDto examDto) {
         UserExam userExam = examDto.getUserExam();
         List<ExamQuestion> examQuestions = examDto.getExamQuestions();
+        Map<Long, Integer> userAnswers = examQuestions.stream()
+                .filter(q -> Objects.nonNull(q.getUserAnswer()))
+                .collect(Collectors.toMap(ExamQuestion::getQuestionId, ExamQuestion::getUserAnswer));
         if(userExam.getUsedTime()<userExam.getExamTimeLimit()&&userExam.getStatus().equals(SystemConstants.EXAM_UNFINISHED)){
             boolean userExamUpdateSuccess = updateById(userExam);
             if (!userExamUpdateSuccess) {
                 throw new SystemException(AppHttpCodeEnum.SYSTEM_ERROR);
             }
-            examQuestionService.updateBatchById(examQuestions);
+            for(ExamQuestion examQuestion : examQuestions){
+                LambdaUpdateWrapper<ExamQuestion> updateWrapper = new LambdaUpdateWrapper<>();
+                updateWrapper.eq(ExamQuestion::getExamId, examQuestion.getExamId());
+                updateWrapper.eq(ExamQuestion::getQuestionId, examQuestion.getQuestionId());
+                updateWrapper.set(ExamQuestion::getUserAnswer, userAnswers.get(examQuestion.getQuestionId()));
+                examQuestionService.update(updateWrapper);
+            }
         }else{
             int correctCount = 0;
             for(ExamQuestion examQuestion : examQuestions){
@@ -100,9 +109,13 @@ public class UserExamServiceImpl extends ServiceImpl<UserExamMapper, UserExam> i
                     examQuestion.setIsCorrect(SystemConstants.WRONG_ANSWER);
                 }
             }
-            boolean examQuestionUpDateSuccess = examQuestionService.updateBatchById(examQuestions);
-            if(!examQuestionUpDateSuccess){
-                throw new SystemException(AppHttpCodeEnum.SYSTEM_ERROR);
+            for(ExamQuestion examQuestion : examQuestions){
+                LambdaUpdateWrapper<ExamQuestion> updateWrapper = new LambdaUpdateWrapper<>();
+                updateWrapper.eq(ExamQuestion::getExamId, examQuestion.getExamId());
+                updateWrapper.eq(ExamQuestion::getQuestionId, examQuestion.getQuestionId());
+                updateWrapper.set(ExamQuestion::getUserAnswer, userAnswers.get(examQuestion.getQuestionId()));
+                updateWrapper.set(ExamQuestion::getIsCorrect,examQuestion.getIsCorrect());
+                examQuestionService.update(updateWrapper);
             }
             userExam.setStatus(SystemConstants.EXAM_FINISHED);
             userExam.setScore(correctCount*100/examQuestions.size());

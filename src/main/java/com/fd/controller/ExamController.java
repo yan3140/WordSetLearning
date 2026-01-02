@@ -14,7 +14,7 @@ public class ExamController {
     @Autowired
     private UserExamService userExamService;
 
-    @GetMapping("/{status}")
+    @GetMapping("/list/{status}")
     public ResponseResult getExams(@PathVariable("status") Integer status) {
         return userExamService.getExams(status);
     }
@@ -27,7 +27,7 @@ public class ExamController {
         return userExamService.createExam(bookId,questionCount,questionRatio,examTimeLimit);
     }
 
-    @PutMapping
+    @PutMapping("/exam-status")
     public ResponseResult updateExamStatus(@RequestBody ExamDto examDto){
         return userExamService.updateExamStatus(examDto);
     }

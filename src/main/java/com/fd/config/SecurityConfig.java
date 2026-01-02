@@ -65,7 +65,7 @@ public class SecurityConfig {
                         .requestMatchers("/book/**").anonymous()
                         .requestMatchers("/word/{id}").permitAll()
                         // 其余所有请求都需要认证
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
                 .logout(AbstractHttpConfigurer::disable)
                 //允许跨域

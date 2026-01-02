@@ -16,4 +16,6 @@ public class WordLVo {
     private String word;
     //释义
     private TranslationVo translation;
+    //未记住次数
+    private Integer forgetCount;
 }

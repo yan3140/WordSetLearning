@@ -74,9 +74,12 @@ public class WordServiceImpl extends ServiceImpl<WordMapper, Word> implements Wo
                 .in(UserWordStatus::getWordId, wordIds)
                 .in(UserWordStatus::getStatus, statusList);
         Page<UserWordStatus> page = new Page<>(pageNum, pageSize);
-        List<Long> wordIdList = userWordStatusService.page(page, queryWrapper1).getRecords().stream()
+        List<UserWordStatus> userWordStatuses = userWordStatusService.page(page, queryWrapper1).getRecords();
+        List<Long> wordIdList = userWordStatuses.stream()
                 .map(UserWordStatus::getWordId)
                 .toList();
+        Map<Long, Integer> wordIdFogetCOuntMap = userWordStatuses.stream()
+                .collect(Collectors.toMap(UserWordStatus::getWordId, UserWordStatus::getForgetCount));
         //为空情况
         if (CollectionUtils.isEmpty(wordIdList)) {
             WordListVo emptyVo = new WordListVo(List.of(), statusList.get(0), 0L);
@@ -100,8 +103,10 @@ public class WordServiceImpl extends ServiceImpl<WordMapper, Word> implements Wo
                         )
                 ));
         for (WordLVo wordLVo : wordLVos) {
-            TranslationVo translationVo = translationVoMap.get(wordLVo.getWordId());
+            Long wordId = wordLVo.getWordId();
+            TranslationVo translationVo = translationVoMap.get(wordId);
             wordLVo.setTranslation(translationVo);
+            wordLVo.setForgetCount(wordIdFogetCOuntMap.get(wordId));
         }
         return ResponseResult.okResult(new WordListVo(wordLVos,statusList.get(0),page.getTotal()));
     }

@@ -41,10 +41,15 @@ public class LearnServiceImpl extends ServiceImpl<LearnMapper, Word> implements 
 
     @Override
     public ResponseResult updateStatus(Long wordId, Integer status) {
+        LambdaQueryWrapper<UserWordStatus> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(UserWordStatus::getWordId,wordId);
+        queryWrapper.eq(UserWordStatus::getUserId,SecurityUtils.getUserId());
+        UserWordStatus userWordStatus = userWordStatusService.getOne(queryWrapper);
         LambdaUpdateWrapper<UserWordStatus> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
         lambdaUpdateWrapper.eq(UserWordStatus::getUserId,SecurityUtils.getUserId());
         lambdaUpdateWrapper.eq(UserWordStatus::getWordId,wordId);
         lambdaUpdateWrapper.set(UserWordStatus::getStatus,status);
+        lambdaUpdateWrapper.set(UserWordStatus::getForgetCount,userWordStatus.getForgetCount()+1);
         userWordStatusService.update(lambdaUpdateWrapper);
         return ResponseResult.okResult();
     }

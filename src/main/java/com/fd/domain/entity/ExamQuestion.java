@@ -20,10 +20,8 @@ import lombok.NoArgsConstructor;
 @TableName("exam_question")
 public class ExamQuestion{
     //题目ID
-    @TableId
     private Long questionId;
     //关联试卷ID
-    @TableField
     private Long examId;
     //关联单词ID
     private Long wordId;
