@@ -12,7 +12,7 @@ import java.util.Date;
 @NoArgsConstructor
 public class UserInfoVo {
     //用户ID
-    private String userId;
+    private Long userId;
     //用户名
     private String userName;
     //昵称

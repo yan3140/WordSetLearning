@@ -154,16 +154,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         Long userId = SecurityUtils.getUserId();
         queryWrapper.eq(UserBook::getUserId, userId);
         //判断是否重复添加
-        Integer isDeleted = userBookService.getById(bookId).getIsDeleted();
-        if(userBookService.count(queryWrapper) > 0||isDeleted.equals(SystemConstants.DELETED)){
-            if(isDeleted.equals(SystemConstants.DELETED)){
-                LambdaUpdateWrapper<UserBook> updateWrapper = new LambdaUpdateWrapper<>();
-                updateWrapper.set(UserBook::getIsDeleted, SystemConstants.UNDELETED);
-                userBookService.update(updateWrapper);
-            }else {
-                throw new SystemException(AppHttpCodeEnum.BOOK_EXIST);
-            }
-        }else {
+        UserBook uBook = userBookService.getOne(queryWrapper);
+        if(Objects.isNull(uBook)){
             UserBook userBook = new UserBook(userId, bookId, SystemConstants.UNDELETED);
             userBookService.save(userBook);
             //将单词状态同步到word状态表
@@ -185,6 +177,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 userWordStatusService.saveBatch(batchStatusList);
                 wordPage.setCurrent(wordPage.getCurrent() + 1);
             } while (wordPage.getCurrent() <= wordPage.getPages()); // 直到所有页查询完毕
+        }
+        else if(userBookService.count(queryWrapper) > 0||uBook.getIsDeleted().equals(SystemConstants.DELETED)){
+            if(uBook.getIsDeleted().equals(SystemConstants.DELETED)){
+                LambdaUpdateWrapper<UserBook> updateWrapper = new LambdaUpdateWrapper<>();
+                updateWrapper.set(UserBook::getIsDeleted, SystemConstants.UNDELETED);
+                userBookService.update(updateWrapper);
+            }else {
+                throw new SystemException(AppHttpCodeEnum.BOOK_EXIST);
+            }
+        }else {
+            throw new SystemException(AppHttpCodeEnum.SYSTEM_ERROR);
         }
         return ResponseResult.okResult();
     }
